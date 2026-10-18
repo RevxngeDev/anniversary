@@ -1,0 +1,355 @@
+<meta charset="utf-8">
+<title>La Misión del Cupón</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;600&family=Caveat:wght@600&family=Lora:ital,wght@1,400;1,500&display=swap">
+<style>
+/* Layout: un papel impreso en risografía a dos tintas; cada escena es una hoja centrada y el cupón es una tarjeta de sellos que se recorta */
+:root {
+  --paper: #eceef3;
+  --sheet: #f8f9fb;
+  --pink: #ff4fa3;
+  --blue: #1f5fd1;
+  --ink: #1b2140;
+  --soft: #626a8a;
+  --display: "DM Serif Display", Georgia, serif;
+  --body: "Outfit", system-ui, sans-serif;
+  --hand: "Caveat", "Segoe Print", cursive;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+/* traducción al ruso: siempre una línea debajo, en cursiva con cirílico */
+.ru { display: block; font-family: "Lora", Georgia, serif; font-style: italic; font-weight: 400; font-size: .52em; line-height: 1.3; letter-spacing: 0; text-transform: none; color: var(--soft); margin-top: .35em; }
+.eyebrow .ru, .t-stub .ru, .clock i .ru { font-size: 12px; margin-top: 2px; }
+p .ru, small .ru, .sign .ru { font-size: .92em; }
+.deadline p .ru { font-size: .85em; }
+.deadline p .ru strong { color: var(--pink); }
+.btn .ru { font-size: 13px; color: inherit; opacity: .85; margin-top: 2px; font-weight: 500; }
+.replay .ru { font-size: 12px; }
+.stamp .ru { font-size: 15px; color: var(--pink); text-align: center; margin-top: 0; }
+.answer-ru { font-family: var(--hand); font-size: 26px; line-height: 1.2; color: var(--soft); animation: rise .7s both; }
+.answer-ru b { color: var(--pink); font-weight: 600; }
+html, body { height: 100%; }
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  overflow-x: hidden;
+}
+/* grano del papel */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .13 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.stage {
+  position: relative; z-index: 1;
+  min-height: 100%;
+  display: grid; place-items: center;
+  padding-block: 48px 128px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.scene { width: 100%; max-width: 460px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--blue); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 9vw, 56px); line-height: 1.02; margin: 0; text-wrap: balance; }
+h1 em { color: var(--pink); }
+p { margin: 0; line-height: 1.55; color: var(--soft); max-width: 36ch; }
+.note { font-family: var(--hand); font-size: 24px; color: var(--blue); transform: rotate(-2deg); }
+button { font: inherit; cursor: pointer; border: 0; }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+.btn {
+  padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 17px;
+  background: var(--pink); color: var(--sheet);
+  box-shadow: 4px 4px 0 var(--blue);
+  transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--blue); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--blue); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); box-shadow: none; }
+.row { position: relative; width: 100%; min-height: 64px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+#yesBtn { transform-origin: left center; }
+#noBtn { transition: left .25s, top .25s; }
+
+/* zona de firma con sello */
+.sign {
+  position: relative; width: 100%; height: 150px;
+  border: 2px dashed #b9bfd3; border-radius: 10px;
+  display: grid; place-items: end start; padding: 14px 16px;
+  color: var(--soft); font-size: 13px;
+}
+.stamp {
+  position: absolute; left: 50%; top: 50%;
+  padding: 10px 18px; border: 4px double var(--pink); border-radius: 8px;
+  font-family: var(--display); font-size: 30px; letter-spacing: .04em; color: var(--pink);
+  transform: translate(-50%, -50%) rotate(-9deg);
+  mix-blend-mode: multiply; opacity: .9;
+}
+.stamp.hit { animation: thud .45s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes thud { from { opacity: 0; transform: translate(-50%, -50%) rotate(-9deg) scale(2.4); } to { opacity: .9; transform: translate(-50%, -50%) rotate(-9deg) scale(1); } }
+
+/* cupón */
+.ticket-wrap { width: 100%; filter: drop-shadow(0 18px 22px #1b214026); animation: slide .9s cubic-bezier(.2,.9,.25,1.1) both; }
+@keyframes slide { from { opacity: 0; transform: translateY(40px) rotate(3deg); } to { opacity: 1; transform: rotate(-1deg); } }
+.ticket {
+  background: var(--sheet);
+  border-radius: 4px;
+  -webkit-mask: radial-gradient(circle at 0 50%, #0000 7px, #000 7.5px) left / 51% 22px repeat-y,
+                radial-gradient(circle at 100% 50%, #0000 7px, #000 7.5px) right / 51% 22px repeat-y;
+          mask: radial-gradient(circle at 0 50%, #0000 7px, #000 7.5px) left / 51% 22px repeat-y,
+                radial-gradient(circle at 100% 50%, #0000 7px, #000 7.5px) right / 51% 22px repeat-y;
+}
+.t-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 26px 28px 18px; }
+.t-top h2 { font-family: var(--display); font-weight: 400; font-size: 26px; line-height: 1.1; margin: 6px 0 0; }
+/* firma visual: el porcentaje impreso en dos tintas desalineadas */
+.riso { position: relative; font-family: var(--display); font-size: 84px; line-height: .85; font-variant-numeric: tabular-nums; }
+.riso .l { display: block; }
+.riso .l.b { color: var(--blue); }
+.riso .l.p { position: absolute; inset: 0; color: var(--pink); mix-blend-mode: multiply; transform: translate(4px, -3px); transition: transform 1.4s cubic-bezier(.2,.8,.2,1); }
+.riso.aligned .l.p { transform: translate(2px, -1px); }
+.riso small { font-size: 36px; }
+
+.stamps { padding: 6px 28px 20px; display: flex; flex-direction: column; gap: 10px; }
+.cells { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+.cell { position: relative; aspect-ratio: 1; max-width: 100%; border-radius: 50%; border: 1.5px dashed #b9bfd3; }
+.cell i {
+  position: absolute; inset: 3px; border-radius: 50%; background: var(--pink);
+  clip-path: inset(0 calc(100% - var(--f, 0%)) 0 0);
+  transform: rotate(var(--r, 0deg)) scale(.4); opacity: 0;
+  transition: transform .35s cubic-bezier(.3,1.6,.5,1), opacity .2s;
+  mix-blend-mode: multiply;
+}
+.cell i::after { content: "♥"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--sheet); font-size: 12px; }
+.cell.on i { opacity: .92; transform: rotate(var(--r, 0deg)) scale(1); }
+.stamps small { color: var(--soft); font-size: 13px; }
+
+.cut { position: relative; border-top: 2px dashed #b9bfd3; margin: 0 14px; }
+.cut span { position: absolute; left: 4px; top: -13px; font-size: 18px; color: var(--soft); background: var(--sheet); padding: 0 4px; }
+.t-stub { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 28px 20px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--soft); }
+.t-stub b { color: var(--ink); font-weight: 600; }
+
+.bumped { font-family: var(--hand); font-size: 26px; color: var(--pink); }
+
+.deadline { display: flex; flex-direction: column; gap: 14px; width: 100%; animation: rise .7s both; }
+.deadline p { color: var(--ink); font-size: 19px; max-width: 30ch; }
+.deadline strong { color: var(--pink); font-weight: 600; }
+.clock { display: flex; gap: 22px; flex-wrap: wrap; }
+.clock div { display: flex; flex-direction: column; }
+.clock b { font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1; color: var(--blue); font-variant-numeric: tabular-nums; }
+.clock i { font-style: normal; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--soft); margin-top: 4px; }
+
+.qa { width: 100%; border-top: 1.5px solid #d3d7e3; padding-top: 22px; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; animation: rise .7s both; }
+.qa h3 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0; line-height: 1.1; }
+.answer { font-family: var(--hand); font-size: 34px; line-height: 1.15; color: var(--blue); min-height: 1.15em; }
+.answer b { color: var(--pink); font-weight: 600; }
+
+.replay { background: none; color: var(--soft); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+
+@media (max-width: 420px) {
+  .t-top { grid-template-columns: 1fr; }
+  .riso { font-size: 72px; }
+  .t-top, .stamps, .t-stub { padding-left: 22px; padding-right: 22px; }
+  .cell i::after { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<main class="stage">
+  <section class="scene" id="s-ask">
+    <div class="eyebrow">Misión secreta<span class="ru" lang="ru">Секретная миссия</span></div>
+    <h1>¿Estás dispuesta a hacer <em>esta misión</em>?<span class="ru" lang="ru">Ты готова выполнить эту миссию?</span></h1>
+    <p>Hay un regalo esperándote, pero primero tienes que decir que sí.<span class="ru" lang="ru">Тебя ждёт подарок, но сначала ты должна сказать «да».</span></p>
+    <div class="row" id="askRow">
+      <button class="btn" id="yesBtn">Sí, estoy dispuesta<span class="ru" lang="ru">Да, я готова</span></button>
+      <button class="btn ghost" id="noBtn">No<span class="ru" lang="ru">Нет</span></button>
+    </div>
+  </section>
+
+  <section class="scene" id="s-accept" hidden>
+    <div class="eyebrow">Contrato de la misión<span class="ru" lang="ru">Договор миссии</span></div>
+    <h1>Sabía que dirías <em>que sí</em><span class="ru" lang="ru">Я знал, что ты скажешь «да»</span></h1>
+    <p>Al aceptar recibes un cupón de regalo. Y ese cupón puede crecer.<span class="ru" lang="ru">Согласившись, ты получишь подарочный купон. И этот купон может расти.</span></p>
+    <div class="sign">
+      <span>Firma de la agente<span class="ru" lang="ru">Подпись агента</span></span>
+      <div class="stamp" id="stamp" hidden>ACEPTADA<span class="ru" lang="ru">ПРИНЯТО</span></div>
+    </div>
+    <button class="btn" id="acceptBtn">Aceptar<span class="ru" lang="ru">Принять</span></button>
+  </section>
+
+  <section class="scene" id="s-coupon" hidden>
+    <div class="bumped" id="bumped" hidden></div>
+    <div class="ticket-wrap">
+      <article class="ticket" aria-label="Cupón de regalo">
+        <div class="t-top">
+          <div>
+            <div class="eyebrow">Cupón de regalo<span class="ru" lang="ru">Подарочный купон</span></div>
+            <h2>Válido para un regalo de Camilo<span class="ru" lang="ru">Действителен на подарок от Камило</span></h2>
+          </div>
+          <div class="riso" id="riso" aria-label="Porcentaje del cupón">
+            <span class="l b"><b id="pctNum">0</b><small>%</small></span>
+            <span class="l p" aria-hidden="true"><b id="pctNum2">0</b><small>%</small></span>
+          </div>
+        </div>
+        <div class="stamps">
+          <div class="cells" id="cells"></div>
+          <small>Cada sello vale 10%.<span class="ru" lang="ru">Каждая печать — это 10%.</span></small>
+        </div>
+        <div class="cut"><span aria-hidden="true">✂</span></div>
+        <div class="t-stub"><span>Nº <b>CML-2810</b></span><span>Canjeable en persona<span class="ru" lang="ru">Обменять лично</span></span></div>
+      </article>
+    </div>
+
+    <div class="deadline" id="deadline" hidden>
+      <p>Tienes tiempo hasta el <strong>28 de octubre</strong> para recibir tu regalo<span class="ru" lang="ru">У тебя есть время до <strong>28 октября</strong>, чтобы получить свой подарок</span></p>
+      <div class="clock" aria-label="Tiempo restante">
+        <div><b id="cD">0</b><i>días<span class="ru" lang="ru">дней</span></i></div>
+        <div><b id="cH">0</b><i>horas<span class="ru" lang="ru">часов</span></i></div>
+        <div><b id="cM">0</b><i>min<span class="ru" lang="ru">мин</span></i></div>
+        <div><b id="cS">0</b><i>seg<span class="ru" lang="ru">сек</span></i></div>
+      </div>
+    </div>
+
+    <div class="qa" id="qa" hidden>
+      <h3>¿Cómo subir el porcentaje?<span class="ru" lang="ru">Как увеличить процент?</span></h3>
+      <button class="btn" id="revealBtn">Ver la respuesta<span class="ru" lang="ru">Посмотреть ответ</span></button>
+      <div class="answer" id="answer" aria-live="polite"></div>
+      <div class="answer-ru" id="answerRu" lang="ru" hidden>Сильно любя. <b>Ты должна любить Камило вдвое сильнее.</b></div>
+    </div>
+
+    <button class="replay" id="replayBtn">Repetir la misión desde el inicio<span class="ru" lang="ru">Повторить миссию с начала</span></button>
+  </section>
+</main>
+
+<script id="coupon-state" type="application/json">{"percent":33}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script>
+const STATE = JSON.parse(document.getElementById('coupon-state').textContent);
+const DEADLINE = new Date(2026, 9, 28, 23, 59, 59);
+const $ = id => document.getElementById(id);
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+
+/* ---------- tarjeta de sellos ---------- */
+const cells = [];
+for (let i = 0; i < 10; i++) {
+  const c = document.createElement('div'); c.className = 'cell';
+  const s = document.createElement('i'); s.style.setProperty('--r', (Math.random() * 40 - 20) + 'deg');
+  c.appendChild(s); $('cells').appendChild(c); cells.push(c);
+}
+function setStamps(p, animate) {
+  cells.forEach((c, i) => {
+    const f = Math.max(0, Math.min(1, (p - i * 10) / 10));
+    c.firstChild.style.setProperty('--f', (f * 100) + '%');
+    c.classList.remove('on');
+    if (f > 0) setTimeout(() => c.classList.add('on'), animate && !still ? 400 + i * 160 : 0);
+  });
+}
+function setPct(n) { $('pctNum').textContent = n; $('pctNum2').textContent = n; }
+
+/* ---------- escenas ---------- */
+function show(id) {
+  document.querySelectorAll('.scene').forEach(s => s.hidden = s.id !== id);
+  scrollTo({ top: 0, behavior: 'smooth' });
+}
+function burst(n) {
+  if (typeof confetti !== 'function' || still) return;
+  confetti({ particleCount: n, spread: 70, origin: { y: .55 }, colors: ['#ff4fa3', '#1f5fd1', '#f8f9fb'], shapes: ['square'], scalar: .9 });
+}
+
+// El botón "No" se escapa
+const noLines = [['¿Segura?', 'Уверена?'], ['Piénsalo', 'Подумай'], ['No vale', 'Так нельзя'], ['Intenta otra vez', 'Попробуй ещё раз'], ['Ese no', 'Не эту']];
+let noCount = 0;
+function dodge(e) {
+  e.preventDefault();
+  const row = $('askRow').getBoundingClientRect(), b = $('noBtn');
+  b.style.position = 'absolute';
+  b.style.left = Math.random() * Math.max(0, row.width - b.offsetWidth) + 'px';
+  b.style.top = (Math.random() * 90 - 10) + 'px';
+  const [es, ru] = noLines[noCount++ % noLines.length];
+  b.textContent = es; b.insertAdjacentHTML('beforeend', '<span class="ru" lang="ru">' + ru + '</span>');
+  $('yesBtn').style.scale = Math.min(1 + noCount * .1, 1.5);
+}
+$('noBtn').addEventListener('pointerenter', dodge);
+$('noBtn').addEventListener('click', dodge);
+function resetNo() { noCount = 0; const b = $('noBtn'); b.style.position = b.style.left = b.style.top = ''; b.innerHTML = 'No<span class="ru" lang="ru">Нет</span>'; $('yesBtn').style.scale = ''; }
+
+$('yesBtn').addEventListener('click', () => show('s-accept'));
+$('acceptBtn').addEventListener('click', () => {
+  $('acceptBtn').disabled = true;
+  const st = $('stamp'); st.hidden = false; st.classList.remove('hit'); void st.offsetWidth; st.classList.add('hit');
+  store.set('mision-aceptada', '1');
+  setTimeout(() => { $('acceptBtn').disabled = false; revealCoupon(); }, still ? 0 : 1100);
+});
+$('replayBtn').addEventListener('click', () => {
+  $('deadline').hidden = $('qa').hidden = true;
+  $('answer').textContent = ''; $('answerRu').hidden = true; $('revealBtn').hidden = false;
+  $('stamp').hidden = true;
+  resetNo();
+  show('s-ask');
+});
+
+function countTo(target) {
+  const start = performance.now(), dur = still ? 1 : 1700;
+  (function step(t) {
+    const k = Math.min((t - start) / dur, 1), e = 1 - Math.pow(1 - k, 3);
+    setPct(Math.round(target * e));
+    if (k < 1) requestAnimationFrame(step);
+  })(start);
+}
+
+function revealCoupon() {
+  show('s-coupon');
+  const p = STATE.percent;
+  const last = parseInt(store.get('ultimo-porcentaje'), 10);
+  if (!isNaN(last) && p > last) {
+    $('bumped').textContent = `¡Tu cupón subió de ${last}% a ${p}%!`;
+    $('bumped').insertAdjacentHTML('beforeend', `<span class="ru" lang="ru">Твой купон вырос с ${last}% до ${p}%!</span>`);
+    $('bumped').hidden = false;
+  } else $('bumped').hidden = true;
+  store.set('ultimo-porcentaje', String(p));
+  setPct(0); setStamps(0, false); $('riso').classList.remove('aligned');
+  setTimeout(() => { countTo(p); setStamps(p, true); $('riso').classList.add('aligned'); }, 500);
+  setTimeout(() => burst(110), 2300);
+  setTimeout(() => { $('deadline').hidden = false; }, 2800);
+  setTimeout(() => { $('qa').hidden = false; }, 4300);
+}
+
+/* ---------- cuenta regresiva ---------- */
+function clock() {
+  let ms = Math.max(0, DEADLINE - new Date());
+  const d = Math.floor(ms / 864e5); ms -= d * 864e5;
+  const h = Math.floor(ms / 36e5); ms -= h * 36e5;
+  const m = Math.floor(ms / 6e4); ms -= m * 6e4;
+  $('cD').textContent = d; $('cH').textContent = h;
+  $('cM').textContent = m; $('cS').textContent = Math.floor(ms / 1e3);
+}
+clock(); setInterval(clock, 1000);
+
+/* ---------- respuesta escrita a mano ---------- */
+$('revealBtn').addEventListener('click', () => {
+  $('revealBtn').hidden = true;
+  const parts = [['Amando mucho. ', false], ['Debes amar el doble a Camilo.', true]];
+  const out = $('answer'); out.textContent = '';
+  let pi = 0, ci = 0, node = null;
+  (function type() {
+    if (pi >= parts.length) { $('answerRu').hidden = false; burst(70); return; }
+    const [txt, bold] = parts[pi];
+    if (ci === 0) { node = bold ? document.createElement('b') : document.createTextNode(''); out.appendChild(node); }
+    node.textContent += txt[ci++];
+    if (ci >= txt.length) { pi++; ci = 0; }
+    setTimeout(type, still ? 0 : 55);
+  })();
+});
+
+/* ---------- inicio ---------- */
+setPct(STATE.percent); setStamps(STATE.percent, false); $('riso').classList.add('aligned');
+if (store.get('mision-aceptada') === '1') revealCoupon();
+
+</script>
