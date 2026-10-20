@@ -349,7 +349,18 @@ $('revealBtn').addEventListener('click', () => {
 });
 
 /* ---------- inicio ---------- */
-setPct(STATE.percent); setStamps(STATE.percent, false); $('riso').classList.add('aligned');
-if (store.get('mision-aceptada') === '1') revealCoupon();
+// El porcentaje real vive en /api/percent; si no responde, se usa el del archivo.
+function loadPercent() {
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), 3000);
+  return fetch('/api/percent', { cache: 'no-store', signal: ctrl.signal })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && Number.isFinite(d.percent)) STATE.percent = d.percent; })
+    .catch(() => {});
+}
+loadPercent().then(() => {
+  setPct(STATE.percent); setStamps(STATE.percent, false); $('riso').classList.add('aligned');
+  if (store.get('mision-aceptada') === '1') revealCoupon();
+});
 
 </script>

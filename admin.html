@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel del Cupón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;600&display=swap">
+<style>
+:root {
+  --paper: #eceef3;
+  --sheet: #f8f9fb;
+  --pink: #ff4fa3;
+  --blue: #1f5fd1;
+  --ink: #1b2140;
+  --soft: #626a8a;
+  --display: "DM Serif Display", Georgia, serif;
+  --body: "Outfit", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px;
+  display: grid; place-items: center;
+  padding-block: 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.card {
+  width: 100%; max-width: 420px; background: var(--sheet); border-radius: 6px; padding: 28px;
+  box-shadow: 6px 6px 0 var(--blue); display: flex; flex-direction: column; gap: 20px;
+}
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--blue); }
+h1 { font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1.05; margin: 6px 0 0; }
+label { font-size: 13px; font-weight: 600; color: var(--soft); display: block; margin-bottom: 6px; }
+input[type=password] {
+  width: 100%; font: inherit; padding: 12px 14px; border-radius: 6px;
+  border: 1.5px solid #c9cedd; background: #fff; color: var(--ink);
+}
+input:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.big { font-family: var(--display); font-size: 88px; line-height: .9; color: var(--blue); font-variant-numeric: tabular-nums; }
+.big small { font-size: 40px; }
+.controls { display: flex; align-items: center; gap: 12px; }
+.controls input { flex: 1; min-width: 0; accent-color: var(--pink); }
+button { font: inherit; cursor: pointer; border: 0; }
+.step { width: 44px; height: 44px; border-radius: 6px; background: #e3e6ef; color: var(--ink); font-size: 22px; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button { padding: 6px 12px; border-radius: 6px; background: transparent; border: 1.5px solid #c9cedd; color: var(--ink); font-size: 14px; }
+.save {
+  padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 17px;
+  background: var(--pink); color: var(--sheet); box-shadow: 4px 4px 0 var(--blue);
+}
+.save:disabled { opacity: .6; cursor: wait; }
+.msg { font-size: 14px; min-height: 1.3em; color: var(--soft); }
+.msg.ok { color: var(--blue); }
+.msg.err { color: #c0264f; }
+a { color: var(--blue); font-size: 14px; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div>
+    <div class="eyebrow">Solo para Camilo</div>
+    <h1>Porcentaje del cupón</h1>
+  </div>
+
+  <div class="big"><span id="num">–</span><small>%</small></div>
+
+  <div class="controls">
+    <button class="step" id="minus" aria-label="Bajar 1%">−</button>
+    <input type="range" id="range" min="0" max="100" step="1" value="33" aria-label="Porcentaje">
+    <button class="step" id="plus" aria-label="Subir 1%">+</button>
+  </div>
+  <div class="presets" id="presets"></div>
+
+  <div>
+    <label for="pw">Contraseña</label>
+    <input type="password" id="pw" autocomplete="current-password">
+  </div>
+
+  <button class="save" id="save">Guardar porcentaje</button>
+  <div class="msg" id="msg" role="status"></div>
+  <a href="/">Ver la página del cupón</a>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const range = $('range'), num = $('num'), msg = $('msg');
+const set = v => { v = Math.max(0, Math.min(100, Math.round(v))); range.value = v; num.textContent = v; };
+const say = (t, kind) => { msg.textContent = t; msg.className = 'msg' + (kind ? ' ' + kind : ''); };
+
+[25, 33, 50, 66, 75, 100].forEach(v => {
+  const b = document.createElement('button'); b.textContent = v + '%';
+  b.addEventListener('click', () => set(v)); $('presets').appendChild(b);
+});
+range.addEventListener('input', () => set(+range.value));
+$('minus').addEventListener('click', () => set(+range.value - 1));
+$('plus').addEventListener('click', () => set(+range.value + 1));
+
+fetch('/api/percent', { cache: 'no-store' })
+  .then(r => r.json().then(d => ({ ok: r.ok, d })))
+  .then(({ ok, d }) => { if (ok) { set(d.percent); say('Este es el porcentaje que ella ve ahora.'); } else { set(33); say(d.error, 'err'); } })
+  .catch(() => { set(33); say('No se pudo leer el porcentaje actual.', 'err'); });
+
+$('save').addEventListener('click', async () => {
+  if (!$('pw').value) { say('Escribe la contraseña para guardar.', 'err'); $('pw').focus(); return; }
+  $('save').disabled = true; say('Guardando…');
+  try {
+    const r = await fetch('/api/percent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ percent: +range.value, password: $('pw').value })
+    });
+    const d = await r.json();
+    if (r.ok) say(`Guardado. El cupón ahora está al ${d.percent}%.`, 'ok');
+    else say(d.error || 'No se pudo guardar.', 'err');
+  } catch (e) {
+    say('No se pudo guardar. Revisa tu conexión e inténtalo otra vez.', 'err');
+  } finally { $('save').disabled = false; }
+});
+</script>
+</body>
+</html>
